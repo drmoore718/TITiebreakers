@@ -1,19 +1,18 @@
 startScores = {
-    'lgd': 12,
-    'secret': 10,
-    'newbee': 8,
-    'tnc': 7,
-    'mineski': 7,
-    'alliance': 7,
-    'liquid': 6,
-    'keen': 5,
-    'chaos': 2,
+    'ig': 13,
+    'og': 9,
+    'vp': 9,
+    'eg': 8,
+    'undying': 8,
+    't1': 8,
+    'aster': 5,
+    'alliance': 4,
+    'tp': 0,
 }
 
 games = [
-    
-    ['liquid', 'tnc',2.83,3.62,2.13],
-    ['secret', 'chaos',1.29,12.6,3.94],
-    ['lgd', 'alliance',1.72,7.36,2.61],
-    ['newbee', 'mineski',2.64,3.93,2.15],
+    ['ig',  'og',           3.21, 2.65, 2.38],
+    ['eg',  'undying',      1.73, 6.73, 2.61],
+    ['vp',  'aster',        1.9, 4.82, 2.65],
+    ['t1', 'tp',            1.54, 9, 2.82],
 ]
