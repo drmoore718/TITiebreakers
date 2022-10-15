@@ -1,33 +1,82 @@
-import GroupA
-import GroupB
+data = {
+    'a': {
+        'nameMap': {
+            'ig': 'Invictus Gaming',
+            'og': 'OG',
+            'eg': 'Evil Geniuses',
+            'undying': 'Team Undying',
+            'vp': 'Virtus.pro',
+            't1': 'T1',
+            'alliance': 'Alliance',
+            'aster': 'Team Aster',
+            'tp': 'Thunder Predator',
+        },
+        'scores': {
+            'ig': 13,
+            'og': 9,
+            'vp': 9,
+            'eg': 8,
+            'undying': 8,
+            't1': 8,
+            'aster': 5,
+            'alliance': 4,
+            'tp': 0,
+        },
+        'games': [
+            ['ig',  'og',           ],
+            ['eg',  'undying',      ],
+            ['vp',  'aster',        ],
+            ['t1',  'tp',           ],
+        ]
+    },
+    'b': {
+        'nameMap': {
+            'lgd': 'PSG.LGD',
+            'vg': 'Vici Gaming',
+            'secret': 'Secret',
+            'bc': 'beastcoast',
+            'elephant': 'Elephant',
+            'ts': 'Team Spirit',
+            'fnatic': 'Fnatic',
+            'qc': 'Quincy Crew',
+            'sg': 'SG esports',
+        },
+        'scores': {
+            'lgd': 11,
+            'vg': 10,
+            'secret': 8,
+            'bc': 7,
+            'elephant': 6,
+            'ts': 6,
+            'fnatic': 4,
+            'qc': 2,
+            'sg': 2,
+        },
+        'games': [
+            ['lgd',     'elephant',     ],
+            ['qc',      'sg',           ],
+            ['ts',      'bc',           ],
+            ['secret',  'fnatic',       ],
 
-teamNameMap = {
-    'ig': 'Invictus Gaming',
-    'og': 'OG',
-    'eg': 'Evil Geniuses',
-    'undying': 'Team Undying',
-    'vp': 'Virtus.pro',
-    't1': 'T1',
-    'alliance': 'Alliance',
-    'aster': 'Team Aster',
-    'tp': 'Thunder Predator',
-    'lgd': 'PSG.LGD',
-    'vg': 'Vici Gaming',
-    'bc': 'beastcoast',
-    'elephant': 'Elephant',
-    'secret': 'Secret',
-    'fnatic': 'Fnatic',
-    'ts': 'Team Spirit',
-    'qc': 'Quincy Crew',
-    'sg': 'SG esports',
+            ['secret',  'vg',           ],
+            ['lgd',     'bc',           ],
+            ['elephant','qc',           ],
+            ['ts',      'sg',           ],
+        ]
+    }
 }
 
-def resolveGroup(name, startScores, games):
+def resolveGroup(name, groupData):
+    startScores = groupData['scores']
+    games = groupData['games']
+    nameMap = groupData['nameMap']
+    teamCount = len(startScores)
     results     = {}
     rankings    = {}
-    expectedGames = {}
 
-    # Convert odds to probabilities
+    # Expected number of games each team will play, including tiebreaker possibilities
+    expectedGames = {x: 0 for x in startScores.keys()}
+
     for x in games:
         if not x[0] in expectedGames:
             expectedGames[x[0]] = 0
@@ -36,17 +85,23 @@ def resolveGroup(name, startScores, games):
             expectedGames[x[1]] = 0
         expectedGames[x[1]] += 2
 
+    # If using odds as input, convert to probabilities
+    for x in games:
+        # If odds/probabilities are not provided, use even-odds
+        if len(x) == 2:
+            x.extend([0.25, 0.5, 0.25])
+
         if x[2] >= 1:
             sum = 0
             for i in range(2, len(x)):
                 x[i] = 1/x[i]
                 sum += x[i]
-            
+
             for i in range(2, len(x)):
                 x[i] = x[i] / sum
 
     for x in startScores:
-        results[x] = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        results[x] = [0 for x in range(teamCount)]
         rankings[x] = {
             'upper': 0,
             'upperTie': 0,
@@ -57,8 +112,8 @@ def resolveGroup(name, startScores, games):
         }
 
     tiebreakers = {
-        'upper': [[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]],
-        'lower': [[0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+        'upper': [[0 for x in range(teamCount)] for y in range(teamCount)],
+        'lower': [[0 for x in range(teamCount)] for y in range(teamCount)],
     }
 
     stack = []
@@ -84,16 +139,16 @@ def resolveGroup(name, startScores, games):
     for x in games:
         if len(x) == 5:
             print('{} : {} | {:.2f}% | {:.2f}% | {:.2f}%'.format(
-                teamNameMap[x[0]],
-                teamNameMap[x[1]],
+                nameMap[x[0]],
+                nameMap[x[1]],
                 x[2]*100,
                 x[3]*100,
                 x[4]*100
             ))
         else:
             print('{} : {} | {:.2f}% | {:.2f}% | ---'.format(
-                teamNameMap[x[0]],
-                teamNameMap[x[1]],
+                nameMap[x[0]],
+                nameMap[x[1]],
                 x[2]*100,
                 x[3]*100
             ))
@@ -105,7 +160,7 @@ def resolveGroup(name, startScores, games):
     print('Team | Upper Bracket | Upper Bracket Tiebreaker | Lower Bracket | Elimination Tiebreaker | Eliminated')
     print('----|----|----|----|----|----')
     for key, value in rankings.items():
-        print('{} | {:.2f}% | {:.2f}% | {:.2f}% | {:.2f}% | {:.2f}%'.format(teamNameMap[key], 
+        print('{} | {:.2f}% | {:.2f}% | {:.2f}% | {:.2f}% | {:.2f}%'.format(nameMap[key],
                 value['upper']*100,
                 value['upperTie']*100,
                 value['lower']*100,
@@ -125,7 +180,7 @@ def resolveGroup(name, startScores, games):
             for j in range(len(value[i])):
                 if value[i] != 0 and value[i][j] != 0:
                     #print('{}-way tie for {} - {:.2f}%'.format(i, j+1, value[i][j]/(math.pow(3,len(games))/100)))
-                    
+
                     if not printedHeader:
                         printedHeader = True
                         print()
@@ -194,7 +249,7 @@ def resolveGame(gameNum, scores, probability, stack, tiebreakers, results, ranki
             results[key][actualPlace] += probability
             place += 1
             prevWins = wins
-        
+
         place = 0
         while place < 9:
             startPlace = place
@@ -204,7 +259,7 @@ def resolveGame(gameNum, scores, probability, stack, tiebreakers, results, ranki
 
             while place+1 < 9 and scores[what[place+1]] == wins:
                 place += 1
-            
+
 
             if place <= 3:
                 ranking = 'upper'
@@ -246,7 +301,7 @@ def resolveGame(gameNum, scores, probability, stack, tiebreakers, results, ranki
             scores[game[0]] -= 1
             scores[game[1]] -= 1
             stack.pop()
-        else:            
+        else:
             stack.append(game[0] + ' > ' + game[1])
             scores[game[0]] += 1
             resolveGame(gameNum+1, scores, probability * game[2], stack, tiebreakers, results, rankings, games, expectedGames)
@@ -259,5 +314,5 @@ def resolveGame(gameNum, scores, probability, stack, tiebreakers, results, ranki
             scores[game[1]] -= 1
             stack.pop()
 
-resolveGroup('Group A', GroupA.startScores, GroupA.games)
-resolveGroup('Group B', GroupB.startScores, GroupB.games)
+resolveGroup('Group A', data['a'])
+resolveGroup('Group B', data['b'])
