@@ -1,3 +1,5 @@
+from datetime import datetime
+
 data = {
     'a': {
         'nameMap': {
@@ -13,30 +15,18 @@ data = {
             'bb': 'BetBoom Team',
         },
         'scores': {
-            'eg': 6,
-            'rng': 5,
-            'og': 4,
-            'tl': 4,
-            'gg': 3,
-            'h': 3,
-            'lgd': 2,
-            's': 2,
-            'boom': 1,
-            'bb': 0,
+            'eg': 14,
+            'lgd': 11,
+            'tl': 11,
+            'rng': 9,
+            'h': 9,
+            'og': 8,
+            'gg': 6,
+            's': 5,
+            'bb': 4,
+            'boom': 3,
         },
         'games': [
-            # ['lgd','og'],
-            # ['boom','gg'],
-            # ['rng','s'],
-            # ['eg','tl'],
-            # ['h','bb'],
-
-            # ['lgd','tl'],
-            # ['s','og'],
-            # ['rng','gg'],
-            # ['eg','h'],
-            # ['boom','bb'],
-
             # ['eg','bb'],
             # ['og','h'],
             # ['s','boom'],
@@ -55,11 +45,11 @@ data = {
             # ['og','bb'],
             # ['s','h'],
 
-            ['og','rng'],
-            ['lgd','bb'],
-            ['tl','h'],
-            ['eg','boom'],
-            ['s','gg'],
+            ['og','rng', 2.61, 3.81, 2.16],
+            ['lgd','bb', 1.35, 9.26, 3.73],
+            ['tl','h', 1.95, 6.19, 2.3],
+            ['eg','boom', 1.9, 5.84, 2.44],
+            ['s','gg', 3.77, 2.83, 2.04],
         ]
     },
     'b': {
@@ -76,29 +66,29 @@ data = {
             'talon': 'Talon Esports',
         },
         'scores': {
-            'aster':    4,
-            'secret':   3,
-            'ts':       3,
-            'ta':       3,
-            'tsm':      3,
-            'te':       3,
-            'bc':       3,
-            'ent':      3,
-            'fnatic':   3,
-            'talon':    1,
+            'te':       10,
+            'aster':    9,
+            'secret':   9,
+            'ta':       8,
+            'ts':       7,
+            'fnatic':   7,
+            'bc':       6,
+            'ent':      6,
+            'talon':    4,
+            'tsm':      4,
         },
         'games': [
-            ['talon','ent'],
-            ['secret','aster'],
-            ['ta','tsm'],
-            ['ts','bc'],
-            ['fnatic','te'],
+            ['talon','ent', 5.48, 2.26, 2.07],
+            ['secret','aster', 2.8, 3.51, 2.14],
+            ['ta','tsm', 3.01, 3.26, 2.13],
+            ['ts','bc', 1.83, 6.19, 2.5],
+            ['fnatic','te', 5.19, 2.05, 2.33],
 
-            ['aster','ts'],
-            ['fnatic','tsm'],
-            ['te','ent'],
-            ['secret','talon'],
-            ['ta','bc'],
+            ['aster','ts', 3.35, 2.93, 2.14],
+            ['fnatic','tsm', 3.39, 3.13, 2.02],
+            ['te','ent', 2.04, 3.49, 2.03],
+            ['secret','talon', 1.92, 6.31, 2.32],
+            ['ta','bc', 2.61, 4.53, 1.98],
         ]
     }
 }
@@ -178,7 +168,7 @@ def resolveGroup(name, groupData):
     print()
     print('# ' + name)
     print()
-    print('## Match outcomes')
+    print('## Match outcome probabilities')
     print('Game | 2 : 0 | 0 : 2 | 1 : 1')
     print('----|----|----|----')
 
@@ -267,8 +257,11 @@ def resolveGroup(name, groupData):
 
                     print('* {}-way tie for {} - {:.2f}%'.format(i, ordinal, value[i][j]*100))
 
-    # for key, value in expectedGames.items():
-    #     print('* {}: {:.2f} games'.format(teamNameMap[key], value))
+    print()
+    print('## Expected number of games to play')
+
+    for key, value in expectedGames.items():
+        print('* {}: {:.2f} games'.format(nameMap[key], value))
 
     print()
     print()
@@ -281,9 +274,9 @@ def resolveGame(gameNum, scores, probability, stack, tiebreakers, results, ranki
         teamCount = len(rankings)
         progress += probability
 
-        # if int(progress*100) > lastProgress:
-        #     print(int(progress*100))
-        #     lastProgress = int(progress*100)
+        if int(progress*100) > lastProgress:
+            # print(f'{datetime.now()} {int(progress*100)}')
+            lastProgress = int(progress*100)
 
         what = sorted(scores, key=lambda x: scores[x], reverse=True)
 
@@ -306,17 +299,26 @@ def resolveGame(gameNum, scores, probability, stack, tiebreakers, results, ranki
             elif startPlace <= 3 and place >= 8:
                 ranking = 'spreadTie'
                 tiebreakers['spread'][numTied][startPlace] += probability
-                # print('{} way tie for {}th {}'.format(numTied, startPlace+1, stack))
             elif startPlace <= 3 and place >= 4:
                 ranking = 'upperTie'
                 tiebreakers['upper'][numTied][startPlace] += probability
-                # print('{} way tie for {}th {}'.format(numTied, startPlace+1, stack))
             elif startPlace >= 4 and place >= 8:
                 ranking = 'lowerTie'
                 tiebreakers['lower'][numTied][startPlace] += probability
-                # print('{} way tie for {}th {}'.format(numTied, startPlace+1, stack))
             else:
                 ranking = 'lower'
+
+            # if numTied >= 7:
+            #     print('{} way tie for {}th {}'.format(numTied, startPlace+1, stack))
+
+            if 'Tie' in ranking:
+                for z in range(startPlace, startPlace+numTied):
+                    # 2-way tie is bo3, add 2.5 games
+                    # 3+ way tie is round robin, add n-1 games
+                    if numTied == 2:
+                        expectedGames[what[z]] += 2.5 * probability
+                    else:
+                        expectedGames[what[z]] += (numTied - 1) * probability
 
             for i in range(startPlace, place+1):
                 rankings[what[i]][ranking] += probability
